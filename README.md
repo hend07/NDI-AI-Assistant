@@ -8,6 +8,45 @@ A Python-based intelligent platform designed to support data governance analysis
 The platform integrates modern data processing, data quality, governance metadata, persistent vector storage, and advanced Retrieval-Augmented Generation (RAG) into a unified evidence-based pipeline for data governance analysis.
 
 ---
+## 📝 Project Description — Problem & Solution
+
+### ❌ The Business Problem
+
+Organizations often face difficulties in understanding and navigating national data governance requirements issued by the **Saudi Data and Artificial Intelligence Authority (SDAIA)**, including the **National Data Index (NDI / Nadee)**.
+
+The official governance documentation can be extensive and contain numerous requirements, controls, and guidelines. Manually searching through these documents to find the relevant requirement for a specific question can be time-consuming and may make it difficult for users to quickly identify the exact supporting evidence.
+
+This creates a need for an intelligent system that can help users **quickly find, understand, and reference the relevant information within the official NDI documentation**.
+
+### 💡 The Technical Solution
+
+The project implements an **Advanced Retrieval-Augmented Generation (RAG) system in Python** that transforms the official **SDAIA NDI documentation** into an interactive, searchable knowledge base.
+
+The system:
+
+* Ingests the official NDI PDF document.
+* Extracts and processes its content.
+* Splits the document into context-preserving chunks.
+* Generates multilingual semantic embeddings.
+* Stores the knowledge base persistently in **ChromaDB**.
+* Retrieves relevant evidence using semantic and lexical retrieval techniques.
+* Applies **Maximal Marginal Relevance (MMR)** to improve retrieval diversity.
+* Generates evidence-grounded answers using an LLM.
+* Provides source and page references for the retrieved evidence.
+
+Through the interactive **Gradio UI**, users can ask questions such as:
+
+> *What are the requirements for data governance?*
+
+> *What are the requirements related to data quality?*
+
+> *What controls are related to compliance?*
+
+The system searches the official NDI knowledge base and provides an **evidence-grounded response with supporting source and page references**, helping users understand the requirements without manually searching through the entire document.
+
+The platform therefore combines **data processing, data quality, governance metadata, persistent vector search, and Advanced RAG** into a unified AI-powered knowledge retrieval system for NDI-related inquiries.
+
+---
 
 # 🏗️ System Architecture
 
