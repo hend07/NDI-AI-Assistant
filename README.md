@@ -270,3 +270,4 @@ For example, if the file is stored in Google Drive, replace the current `/conten
 The following screenshot demonstrates the interactive **NDI Governance & RAG Chat** interface and an example of an evidence-grounded response with retrieved source references.
 
 ![NDI Governance & RAG Chatbot](chatbot.png)
+![NDI Governance & RAG Chatbot1](chatbot1.png)
