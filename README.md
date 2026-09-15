@@ -3,7 +3,7 @@
 **Course:** Modern Data Engineering for Advanced AI Systems
 **Organization:** SDAIA Academy — https://github.com/SDAIAAcademy
 
-A Python-based intelligent platform designed to support data governance analysis, evidence retrieval, compliance-oriented assessment, and technical and administrative risk analysis based on the **National Data Index (NDI / Nadee)** issued by the **Saudi Data and Artificial Intelligence Authority (SDAIA)**.
+A Python-based intelligent platform designed to support data governance analysis, evidence retrieval, compliance-oriented assessment, and technical and administrative risk analysis based on the **National Data Index (NDI / Nadee)** issued by the **SDAIA**.
 
 The platform integrates modern data processing, data quality, governance metadata, persistent vector storage, and advanced Retrieval-Augmented Generation (RAG) into a unified evidence-based pipeline for data governance analysis.
 
