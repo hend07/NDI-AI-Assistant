@@ -246,3 +246,27 @@ ndi_capstone/
 ```
 
 The `chroma_db` directory contains the persistent ChromaDB d_
+
+## ⚠️ Important: NDI PDF File Path
+
+Before running the document ingestion and RAG pipeline, make sure that the path to the **National Data Index (NDI) PDF** matches the actual location of the uploaded file in your Google Colab environment.
+
+The current implementation uses:
+
+```text
+/content/National-Data-Index_v1.0_AR.PDF
+```
+
+If the PDF is uploaded to a different location, **update the file path in the relevant notebook cell before running the PDF ingestion process**.
+
+For example, if the file is stored in Google Drive, replace the current `/content/` path with the corresponding Google Drive path.
+
+> **Note:** The file path is environment-specific and may need to be changed when the notebook is executed in a different Colab session or environment.
+
+---
+
+# 💬 Interactive AI Governance Assistant — Output
+
+The following screenshot demonstrates the interactive **NDI Governance & RAG Chat** interface and an example of an evidence-grounded response with retrieved source references.
+
+![NDI Governance & RAG Chatbot](chatbot.png)
