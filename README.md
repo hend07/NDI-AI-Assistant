@@ -12,7 +12,7 @@ The platform integrates modern data processing, data quality, governance metadat
 
 ### ❌ The Business Problem
 
-Organizations often face difficulties in understanding and navigating national data governance requirements issued by the **Saudi Data and Artificial Intelligence Authority (SDAIA)**, including the **National Data Index (NDI / Nadee)**.
+Organizations often face difficulties in understanding and navigating national data governance requirements issued by the **Saudi Data and Artificial Intelligence Authority (SDAIA)**, including the **NDI**.
 
 The official governance documentation can be extensive and contain numerous requirements, controls, and guidelines. Manually searching through these documents to find the relevant requirement for a specific question can be time-consuming and may make it difficult for users to quickly identify the exact supporting evidence.
 
