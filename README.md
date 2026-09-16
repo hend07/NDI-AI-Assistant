@@ -25,7 +25,7 @@ The project implements an **Advanced Retrieval-Augmented Generation (RAG) system
 The system:
 
 * Ingests the official NDI PDF document.
-* Extracts and processes its content.
+* Extracts and processes its content through a staged (bronze → silver → gold) pipeline.
 * Splits the document into context-preserving chunks.
 * Generates multilingual semantic embeddings.
 * Stores the knowledge base persistently in **ChromaDB**.
@@ -33,6 +33,7 @@ The system:
 * Applies **Maximal Marginal Relevance (MMR)** to improve retrieval diversity.
 * Generates evidence-grounded answers using an LLM.
 * Provides source and page references for the retrieved evidence.
+* Accepts live governance/risk events through an asynchronous pipeline and indexes accepted events into the same knowledge base in real time.
 
 Through the interactive **Gradio UI**, users can ask questions such as:
 
@@ -52,8 +53,8 @@ The platform therefore combines **data processing, data quality, governance meta
 
 The platform integrates six core components into a unified data and AI pipeline:
 
-1. Data Ingestion & Processing
-2. Real-Time Event Processing
+1. Data Ingestion & Processing (Bronze / Silver / Gold)
+2. Real-Time Event Processing (integrated with the vector knowledge base)
 3. Vector Database & Semantic Knowledge Base
 4. Advanced RAG
 5. Data Quality
@@ -61,11 +62,32 @@ The platform integrates six core components into a unified data and AI pipeline:
 
 ---
 
-## 1. Data Ingestion & Processing
+## 1. Data Ingestion & Processing (Bronze / Silver / Gold)
 
-The platform processes incoming governance and risk-related events through a lightweight event-ingestion and normalization pipeline.
+Document ingestion follows a staged, layered pipeline so that each processing step is traceable and reproducible rather than being an in-memory, one-shot conversion:
 
-The processing flow includes:
+```text
+NDI PDF
+   │
+   ▼
+BRONZE  — raw extracted text per page, written to bronze/<file>_raw.jsonl
+   │
+   ▼
+SILVER  — cleaned text, split into context-preserving chunks with stable IDs,
+          written to silver/<file>_chunks.jsonl
+   │
+   ▼
+GOLD    — chunks + embeddings indexed into ChromaDB, with an indexing
+          manifest written to gold/<file>_indexed_manifest.json
+```
+
+* **Bronze** preserves the original extracted text exactly as read from the PDF, before any cleaning — useful for re-processing or auditing what the source actually contained.
+* **Silver** holds the cleaned, chunked, deduplicated-by-ID text that is ready for embedding, independent of any specific vector store.
+* **Gold** is the fully processed, embedded, and indexed layer that the RAG pipeline queries directly, along with a manifest recording which chunk IDs were indexed under which asset.
+
+This gives the platform a lightweight but functional Medallion-style layering, rather than only creating empty directories.
+
+Incoming governance and risk-related **events** (as opposed to the source document) follow a separate, lighter validation flow:
 
 ```text
 Incoming Event
@@ -83,17 +105,13 @@ Normalization
 Validated Event
 ```
 
-The current implementation focuses on **event ingestion, validation, normalization, and persistent vector storage** rather than implementing a full Medallion Architecture.
-
-This distinction reflects the actual implementation of the capstone and avoids representing directory creation or temporary processing as a production data-lake architecture.
-
 ---
 
 # 2. Real-Time Data Ingestion Pipeline
 
 The platform implements an asynchronous event-processing pipeline using **`asyncio.Queue`**.
 
-The pipeline simulates a real-time ingestion environment in which governance and risk events can be received and processed asynchronously.
+The pipeline simulates a real-time ingestion environment in which governance and risk events can be received, validated, and processed asynchronously, and now **feeds directly into the same vector knowledge base used for RAG retrieval** rather than running as an isolated demo.
 
 The current processing flow includes:
 
@@ -102,7 +120,10 @@ The current processing flow includes:
 * Data-quality validation.
 * Event normalization.
 * Duplicate detection.
-* Structured processing results.
+* Embedding of the validated event and upsert into the shared ChromaDB collection, tagged as `type: real_time_event`.
+* Structured processing results, including the indexed document ID when successful.
+
+Because accepted events are embedded and written into the same collection queried by the RAG pipeline, real-time events become part of the retrievable knowledge base immediately — closing the loop between the streaming layer and the semantic search layer.
 
 The architecture provides a foundation for future integration with production streaming technologies such as message brokers or event-streaming platforms.
 
@@ -115,13 +136,14 @@ The platform integrates **ChromaDB** as a persistent local vector database for t
 The document ingestion pipeline:
 
 * Reads the original NDI PDF.
-* Extracts document text using PyPDF.
-* Cleans extracted text.
-* Splits the document into context-preserving chunks.
+* Extracts document text using PyPDF (written to the Bronze layer).
+* Cleans extracted text and splits it into context-preserving chunks (written to the Silver layer).
 * Generates multilingual semantic embeddings.
-* Stores embeddings in ChromaDB.
+* Stores embeddings in ChromaDB, together with an indexing manifest (the Gold layer).
 * Preserves document metadata such as source and page information.
 * Uses stable identifiers for indexed chunks.
+
+Real-time governance/risk events validated by the asynchronous pipeline are embedded and upserted into this same collection, so the vector store reflects both the static NDI document and live event data.
 
 The vector database is persisted locally through ChromaDB's persistent storage mechanism.
 
@@ -152,7 +174,7 @@ The retrieval stage combines:
 * Semantic vector similarity.
 * Lexical relevance signals.
 
-This allows the system to retrieve both semantically related evidence and evidence containing important terminology or keywords.
+This allows the system to retrieve both semantically related evidence and evidence containing important terminology or keywords — across both the indexed NDI document (Gold layer) and any indexed real-time events.
 
 ### 🧠 Maximal Marginal Relevance (MMR)
 
@@ -178,7 +200,7 @@ When an external LLM is unavailable, the system can fall back to displaying the 
 
 # 5. Data Quality Engine
 
-A dedicated **Data Quality Engine** validates incoming events before downstream processing.
+A dedicated **Data Quality Engine** validates incoming events and documents before downstream processing.
 
 The current framework evaluates four main dimensions:
 
@@ -202,7 +224,7 @@ Validates structured fields such as:
 * Numeric values.
 * Source information.
 
-The platform also includes automated self-tests covering the core data-quality and governance logic.
+Data-quality checks run both on real-time events (before they are indexed into ChromaDB) and are exercised by automated self-tests covering the core data-quality and governance logic.
 
 ---
 
@@ -227,11 +249,11 @@ The current lineage model represents the processing path from the original sourc
 ```text
 Source PDF
    ↓
-Text Extraction
+Bronze (raw extracted text)
    ↓
-Chunking
+Silver (cleaned, chunked text)
    ↓
-Embeddings
+Gold (embeddings + indexing manifest)
    ↓
 ChromaDB
    ↓
@@ -239,6 +261,8 @@ Retrieval
    ↓
 AI Response
 ```
+
+Real-time events follow a parallel, shorter lineage: **Incoming Event → Validation → Normalization → Embedding → ChromaDB**.
 
 ## Role-Based Access Control (RBAC)
 
@@ -274,17 +298,21 @@ This provides a foundation for implementing more granular governance-aware acces
 
 # 📁 Storage Structure
 
-The platform uses persistent ChromaDB storage for the semantic knowledge base.
+The platform uses persistent ChromaDB storage for the semantic knowledge base, plus a layered bronze/silver/gold structure for document processing artifacts.
 
 The main working directory is structured as:
 
 ```text
 ndi_capstone/
+├── bronze/
+│   └── <file>_raw.jsonl                 # raw text extracted per page
+├── silver/
+│   └── <file>_chunks.jsonl              # cleaned, chunked text with stable IDs
+├── gold/
+│   └── <file>_indexed_manifest.json     # indexed chunk IDs + asset metadata
 └── chroma_db/
-    └── chroma.sqlite3
+    └── chroma.sqlite3                   # persistent vector store (NDI chunks + real-time events)
 ```
-
-The `chroma_db` directory contains the persistent ChromaDB d_
 
 ## ⚠️ Important: NDI PDF File Path
 
